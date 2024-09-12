@@ -1,33 +1,46 @@
-const express = require('express')
-const app = express()
-const port = 5000
+const express = require('express');
+const app = express();
+const port = 5000;
 const mongoDB = require('./db');
-// const cors = require('cors');
+const cors = require('cors'); // Importing cors middleware
 
-// app.use(cors({
-//   origin: ["https://foodzy-seven.vercel.app/"],
-//   methods: ['GET', 'POST'],
-//   credentials: true,  // <-- REQUIRED for session cookies to work properly!  // Enable CORS with credentials (cookies)
-// }))
+// Initialize MongoDB connection
 mongoDB();
 
-app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-    res.header(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
-    );
-    next();
-})
+// Define allowed origins for CORS
+const allowedOrigins = [
+  'http://localhost:3000',          // For local development
+  'https://foodzy-hazel.vercel.app' // Your deployed frontend URL
+];
 
-app.use(express.json())
-app.use('/api', require('./Routes/CreateUser'))
-app.use('/api', require('./Routes/DisplayData'))
-app.use('/api', require('./Routes/OrderData'))
+// CORS configuration to handle requests from allowed origins
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin, like mobile apps or curl requests
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST'], // Specify allowed request methods
+  credentials: true,        // Allow credentials (e.g., cookies, auth headers)
+}));
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Route handlers
+app.use('/api', require('./Routes/CreateUser'));
+app.use('/api', require('./Routes/DisplayData'));
+app.use('/api', require('./Routes/OrderData'));
+
+// Test route to verify server is running
 app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+  res.send('Hello World!');
+});
 
+// Start the server
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
